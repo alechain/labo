@@ -12,7 +12,7 @@ ftirar  <- function( prob, qty )
 {
   return(  sum( runif(qty) < prob ) )
 }
-
+runif(10)
 
 #variables globales que usan las funciones gimnasio_xxxx
 GLOBAL_jugadores  <- c()

@@ -1,0 +1,19 @@
+Merge remote-tracking branch 'upstream/main'
+
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# Date:      Wed Sep 7 21:03:01 2022 -0300
+#
+# On branch main
+# Your branch is up to date with 'origin/main'.
+#
+# Last commands done (2 commands done):
+#    pick f98b5ee agregue prueba
+#    pick 48f568a cambios gridsearch
+# Next commands to do (4 remaining commands):
+#    pick fdaec75 initial BO
+#    pick 3442821 BO
+# You are currently editing a commit while rebasing branch 'main' on 'a7c9a2c'.
+#
+# No changes

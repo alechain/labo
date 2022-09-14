@@ -80,7 +80,7 @@ kBO_iter    <-  200   #cantidad de iteraciones de la Optimizacion Bayesiana
 
 #kcarpeta_datasets    <- "./datasets/"                          #VM o Ubuntu
 
-kcarpeta_datasets    <- "./buckets/b1/datasets/"                          #VM o Ubuntu
+kcarpeta_datasets    <- "/home/alechain97/buckets/b1/datasets/"                          #VM o Ubuntu
 
 #Archivo con datos etiquetados para entrenamiento
 karchivo_entrada      <-  paste0(kcarpeta_datasets, "competencia1_2022_FE.csv")
@@ -215,7 +215,7 @@ EstimarGanancia  <- function( x )
 
      #genero el archivo para Kaggle
      fwrite( entrega, 
-             file= paste0(kkaggle, GLOBAL_iteracion, ".csv" ),
+             file= paste0("/home/alechain97/buckets/b1/exp/",kkaggle, GLOBAL_iteracion, ".csv" ),
              sep=  "," )
    }
 

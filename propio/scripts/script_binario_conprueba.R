@@ -97,12 +97,12 @@ ArbolSimple  <- function( fold_test, data, param )
 {
   #genero el modelo
   modelo  <- rpart("clase_binaria ~ . ", 
-                   data= data[ fold != fold_test,-c("clase_ternaria") ],
+                   data= data[ fold != fold_test,-c("clase_ternaria","foto_mes") ],
                    xval= 0,
                    control= param )
   
   #aplico el modelo a los datos de testing, fold==2
-  prediccion  <- predict( modelo, data[ fold==fold_test, -c("clase_ternaria") ], type = "prob")
+  prediccion  <- predict( modelo, data[ fold==fold_test, -c("clase_ternaria","foto_mes") ], type = "prob")
   
   prob_baja2  <- prediccion[, "SI"]
   
@@ -146,12 +146,12 @@ EstimarGanancia  <- function( x )
     GLOBAL_ganancia_max <<-  ganancia  #asigno la nueva maxima ganancia
     
     modelo  <- rpart("clase_binaria ~ . ",
-                     data= dtrain[,-c("clase_ternaria") ],
+                     data= dtrain[,-c("clase_ternaria","foto_mes") ],
                      xval= 0,
                      control= x )
     
     #genero el vector con la prediccion, la probabilidad de ser positivo
-    prediccion  <- predict( modelo, dapply[,-c("clase_ternaria") ])
+    prediccion  <- predict( modelo, dapply[,-c("clase_ternaria","foto_mes") ])
     
     prob_baja2  <- prediccion[, "SI"]
     Predicted   <- ifelse( prob_baja2 > 0.05, 1, 0 )
@@ -233,7 +233,7 @@ if(!file.exists(kbayesiana)) {
 
 
 modelo  <- rpart("clase_binaria ~ .",
-                 data= dtrain[,-c("clase_ternaria")],
+                 data= dtrain[,-c("clase_ternaria","foto_mes")],
                  xval= 0,
                  cp=           -1,
                  minsplit=    200,
@@ -241,9 +241,9 @@ modelo  <- rpart("clase_binaria ~ .",
                  maxdepth=      7 )
 
 #genero el vector con la prediccion, la probabilidad de ser positivo
-prediccion  <- predict( modelo, dapply[,-c("clase_ternaria")])
+prediccion  <- predict( modelo, dapply[,-c("clase_ternaria","foto_mes")])
 
-prediccion  <- predict( modelo, dtrain[,-c("clase_ternaria")])
+prediccion  <- predict( modelo, dtrain[,-c("clase_ternaria","foto_mes")])
 
 base=data.table(tr=dtrain[,clase_ternaria],prediccion)
 

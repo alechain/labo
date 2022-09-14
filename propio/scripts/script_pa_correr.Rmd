@@ -76,7 +76,7 @@ colnames(data2) %in%varse
 kexperimento  <- NA   #NA si se corre la primera vez, un valor concreto si es para continuar procesando
 
 kscript           <- "04.02 - BO Rpart FE"
-kBO_iter    <-  200   #cantidad de iteraciones de la Optimizacion Bayesiana
+kBO_iter    <-  2000   #cantidad de iteraciones de la Optimizacion Bayesiana
 
 #kcarpeta_datasets    <- "./datasets/"                          #VM o Ubuntu
 

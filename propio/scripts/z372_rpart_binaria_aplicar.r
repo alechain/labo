@@ -11,10 +11,10 @@ require("rpart.plot")
 
 
 #Aqui se debe poner la carpeta de la materia de SU computadora local
-setwd("~/buckets/b1/")  #Establezco el Working Directory
+#setwd("~/buckets/b1/")  #Establezco el Working Directory
 
 #cargo el dataset
-dataset  <- fread("./datasets/competencia1_2022.csv" )
+dataset  <- fread("/Users/achain/Documents/github/labo/propio/datasets/competencia1_2022.csv" )
 
 
 #creo la clase_binaria SI={ BAJA+1, BAJA+2 }    NO={ CONTINUA }
@@ -62,8 +62,8 @@ dfinal[ , azar := runif( nrow(dapply) ) ]
 setorder( dfinal, -prob_SI, azar )
 
 
-dir.create( "./exp/" )
-dir.create( "./exp/KA3720" )
+#dir.create( "./exp/" )
+#dir.create( "./exp/KA3720" )
 
 
 for( corte  in  c( 7500, 8000, 8500, 9000, 9500, 10000, 10500, 11000 ) )
@@ -74,6 +74,6 @@ for( corte  in  c( 7500, 8000, 8500, 9000, 9500, 10000, 10500, 11000 ) )
 
 
   fwrite( dfinal[ , list(numero_de_cliente, Predicted) ], #solo los campos para Kaggle
-           file= paste0( "./exp/KA3720/KA3720_001_",  corte, ".csv"),
+           file= paste0( "KA3720_001_",  corte, ".csv"),
            sep=  "," )
 }

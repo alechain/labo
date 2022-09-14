@@ -1,0 +1,188 @@
+---
+title: "Untitled"
+output: html_document
+---
+
+
+
+```{r}
+setwd("/Users/achain/Documents/github/labo/propio")
+
+```
+
+
+```{r}
+#Feature Engineering
+#creo nuevas variables dentro del mismo mes
+#Condimentar a gusto con nuevas variables
+
+#limpio la memoria
+rm( list=ls() )
+gc()
+
+require("data.table")
+
+#Establezco el Working Directory
+setwd('/Users/achain/Documents/github/labo/propio')
+
+
+EnriquecerDataset <- function( dataset , arch_destino )
+{
+  columnas_originales <-  copy(colnames( dataset ))
+
+  #INICIO de la seccion donde se deben hacer cambios con variables nuevas
+  #se crean los nuevos campos para MasterCard  y Visa, teniendo en cuenta los NA's
+  #varias formas de combinar Visa_status y Master_status
+  dataset[ , mv_status01       := pmax( Master_status,  Visa_status, na.rm = TRUE) ]
+  dataset[ , mv_status02       := Master_status +  Visa_status ]
+  dataset[ , mv_status03       := pmax( ifelse( is.na(Master_status), 10, Master_status) , ifelse( is.na(Visa_status), 10, Visa_status) ) ]
+  dataset[ , mv_status04       := ifelse( is.na(Master_status), 10, Master_status)  +  ifelse( is.na(Visa_status), 10, Visa_status)  ]
+  dataset[ , mv_status05       := ifelse( is.na(Master_status), 10, Master_status)  +  100*ifelse( is.na(Visa_status), 10, Visa_status)  ]
+
+  dataset[ , mv_status06       := ifelse( is.na(Visa_status), 
+                                          ifelse( is.na(Master_status), 10, Master_status), 
+                                          Visa_status)  ]
+
+  dataset[ , mv_status07       := ifelse( is.na(Master_status), 
+                                          ifelse( is.na(Visa_status), 10, Visa_status), 
+                                          Master_status)  ]
+
+
+    
+  #combino MasterCard y Visa
+  dataset[ , mv_mfinanciacion_limite := rowSums( cbind( Master_mfinanciacion_limite,  Visa_mfinanciacion_limite) , na.rm=TRUE ) ]
+
+  dataset[ , mv_Fvencimiento         := pmin( Master_Fvencimiento, Visa_Fvencimiento, na.rm = TRUE) ]
+  dataset[ , mv_Finiciomora          := pmin( Master_Finiciomora, Visa_Finiciomora, na.rm = TRUE) ]
+  dataset[ , mv_msaldototal          := rowSums( cbind( Master_msaldototal,  Visa_msaldototal) , na.rm=TRUE ) ]
+  dataset[ , mv_mconsumospesos       := rowSums( cbind( Master_mconsumospesos,  Visa_mconsumospesos) , na.rm=TRUE ) ]
+  dataset[ , mv_mconsumosdolares     := rowSums( cbind( Master_mconsumosdolares,  Visa_mconsumosdolares) , na.rm=TRUE ) ]
+  dataset[ , mv_mlimitecompra        := rowSums( cbind( Master_mlimitecompra,  Visa_mlimitecompra) , na.rm=TRUE ) ]
+  dataset[ , mv_mpagado              := rowSums( cbind( Master_mpagado,  Visa_mpagado) , na.rm=TRUE ) ]
+  dataset[ , mv_cconsumos            := rowSums( cbind( Master_cconsumos,  Visa_cconsumos) , na.rm=TRUE ) ]
+  dataset[ , mv_mpagominimo          := rowSums( cbind( Master_mpagominimo,  Visa_mpagominimo) , na.rm=TRUE ) ]
+  dataset[ , ratio_mrent          := ifelse(!is.na(mrentabilidad/mrentabilidad_annual),mrentabilidad/mrentabilidad_annual,0) ]
+  dataset[ , ratio_mrent          := ifelse(!is.na(mrentabilidad/mrentabilidad_annual ),mrentabilidad/mrentabilidad_annual ,0)]
+  dataset[ , margen_tasa          := mactivos_margen-mpasivos_margen ]
+  dataset[ , spread          := mactivos_margen-mpasivos_margen ]
+  dataset[ , ratio_tran_traj          := ifelse(!is.na(ctarjeta_debito_transacciones/ctarjeta_debito),ctarjeta_debito_transacciones/ctarjeta_debito,0) ]
+  dataset[ , ratio_pres_pers          := ifelse(!is.na(mprestamos_personales/cprestamos_personales),mprestamos_personales/cprestamos_personales,0 )]
+  dataset[ , ratio_pres_prend          := ifelse(!is.na(mprestamos_prendarios/cprestamos_prendarios),mprestamos_prendarios/cprestamos_prendarios,0 )]
+  dataset[ , ratio_pres_hipo        := ifelse(!is.na(mprestamos_hipotecarios/cprestamos_hipotecarios),mprestamos_hipotecarios/cprestamos_hipotecarios,0 )]
+  dataset[ , ratio_plazo_fijo       := ifelse(!is.na(rowSums( cbind( mplazo_fijo_dolares,  mplazo_fijo_pesos) , na.rm=TRUE )/cplazo_fijo), (rowSums( cbind( mplazo_fijo_dolares,  mplazo_fijo_pesos) , na.rm=TRUE )/cplazo_fijo),0)]
+  dataset[ , ratio_inv_1       := ifelse(!is.na(rowSums( cbind( minversion1_pesos,  minversion1_dolares) , na.rm=TRUE )/cinversion1), (rowSums( cbind( minversion1_pesos,  minversion1_dolares) , na.rm=TRUE )/cinversion1),0)]
+  dataset[ , ratio_inv_2       := ifelse(!is.na(minversion2/cinversion2),minversion2/cinversion2,0) ]
+  dataset[ , seguro_total       := rowSums( cbind( cseguro_vida,  cseguro_auto,cseguro_vivienda,cseguro_accidentes_personales) , na.rm=TRUE ) ]
+  dataset[ , payroll_total       := rowSums( cbind( mpayroll,  mpayroll2) , na.rm=TRUE ) ]
+  dataset[ , ratio_payroll_total       := ifelse(!is.na(rowSums( cbind( mpayroll,  mpayroll2) , na.rm=TRUE ) /rowSums( cbind( cpayroll_trx,  cpayroll2_trx) , na.rm=TRUE )), (rowSums( cbind( mpayroll,  mpayroll2) , na.rm=TRUE ) /rowSums( cbind( cpayroll_trx,  cpayroll2_trx) , na.rm=TRUE )),0)]
+  dataset[ , ratio_payroll_2       :=   ifelse(!is.na(mpayroll2/cpayroll2_trx),(mpayroll2/cpayroll2_trx),0)]
+  dataset[ , ratio_payroll       :=   ifelse(!is.na(mpayroll/cpayroll_trx),mpayroll/cpayroll_trx,0)]
+  dataset[ , ratio_buy_sel_forex      :=   ifelse(!is.na(mforex_buy/mforex_sell),(mforex_buy/mforex_sell),0)]
+  dataset[ , ratio_buy_forex      :=   ifelse(!is.na(mforex_buy/cforex_buy),(mforex_buy/cforex_buy),0)]
+  dataset[ , ratio_sel_forex      :=   ifelse(!is.na(mforex_sell/cforex_sell),(mforex_sell/cforex_sell),0)]
+  dataset[ , debito_anti      :=   ifelse(!is.na(rowSums( cbind( ccuenta_debitos_automaticos,  ctarjeta_visa_debitos_automaticos,ctarjeta_master_debitos_automaticos) , na.rm=TRUE )*cliente_antiguedad),(rowSums( cbind( ccuenta_debitos_automaticos,  ctarjeta_visa_debitos_automaticos,ctarjeta_master_debitos_automaticos) , na.rm=TRUE )*cliente_antiguedad),0)]
+  dataset[ , mv_monto_utilizado := mv_mlimitecompra - mv_mpagado ]
+  dataset[ , ratio_tr_reci      :=   ifelse(!is.na(mtransferencias_recibidas/ctransferencias_recibidas),(mtransferencias_recibidas/ctransferencias_recibidas),0)]
+  dataset[ , ratio_tr_emi      :=   ifelse(!is.na(mtransferencias_emitidas/ctransferencias_emitidas),(mtransferencias_emitidas/ctransferencias_emitidas),0)]
+    dataset[ , ratio_ext_autos      :=   ifelse(!is.na(mextraccion_autoservicio/cextraccion_autoservicio),(mextraccion_autoservicio/cextraccion_autoservicio),0)]
+    dataset[ , ratio_cheq_dep      :=   ifelse(!is.na(mcheques_depositados/ccheques_depositados),(mcheques_depositados/ccheques_depositados),0)]
+    dataset[ , ratio_cheq_emi      :=   ifelse(!is.na(mcheques_emitidos/ccheques_emitidos),(mcheques_emitidos/ccheques_emitidos),0)]
+    dataset[ , ratio_cheq_dep_re      :=   ifelse(!is.na(mcheques_depositados_rechazados/ccheques_depositados_rechazados),(mcheques_depositados_rechazados/ccheques_depositados_rechazados),0)]
+    dataset[ , ratio_cheq_emi_re      :=   ifelse(!is.na(mcheques_emitidos_rechazados/ccheques_emitidos_rechazados),(mcheques_emitidos_rechazados/ccheques_emitidos_rechazados),0)]
+      dataset[ , ratio_cheq_dep_rech      :=   ifelse(!is.na(mcheques_depositados_rechazados/mcheques_depositados),(mcheques_depositados_rechazados/mcheques_depositados),0)]
+      dataset[ , ratio_cheq_emi_rech      :=   ifelse(!is.na(mcheques_emitidos_rechazados/mcheques_emitidos),(mcheques_emitidos_rechazados/mcheques_emitidos),0)]
+      
+          dataset[ , ratio_catm      :=   ifelse(!is.na(matm/catm_trx),(matm/catm_trx),0)]
+    dataset[ , ratio_catm_oth      :=   ifelse(!is.na(matm_other/catm_trx_other),(matm_other/catm_trx_other),0)]
+    dataset[ , ratio_catm_or_oth      :=   ifelse(!is.na(matm/matm_other),(matm/matm_other),0)]
+  
+
+    
+  columnas_extendidas <-  copy( setdiff(  colnames(dataset), columnas_originales ) )
+
+  #grabo con nombre extendido
+  fwrite( dataset,
+          file=arch_destino,
+          sep= "," )
+}
+#------------------------------------------------------------------------------
+
+#kcarpeta_datasets    <- "../input/laboratorio-de-implementacion-i-2021/"   #KAGGLE
+#kcarpeta_datasets    <- "./buckets/b1/datasets/"                          #VM o Ubuntu
+kcarpeta_datasets    <- "./datasets/"                          #VM o Ubuntu
+
+#Archivo con datos etiquetados para entrenamiento
+karchivo_entrada      <-  paste0(kcarpeta_datasets, "competencia1_2022.csv")
+karchivo_salida      <-  paste0(kcarpeta_datasets, "competencia1_2022_FE.csv")
+
+
+
+#lectura rapida del dataset  usando fread  de la libreria  data.table
+dataset1  <- fread(karchivo_entrada)
+
+EnriquecerDataset( dataset1, karchivo_salida )
+
+quit( save="no")
+
+```
+
+
+
+```{r}
+#limpio la memoria
+rm( list=ls() )  #remove all objects
+gc()             #garbage collection
+
+library("data.table")
+library("rlist")
+library("yaml")
+
+library("rpart")
+library("parallel")
+
+#paquetes necesarios para la Bayesian Optimization
+library("DiceKriging")
+library("mlrMBO")
+```
+
+```{r}
+setwd("/Users/achain/Documents/github/labo/propio")
+
+ksemilla_azar  <- 500113
+dataset <- fread("./datasets/competencia1_2022_FE.csv")
+
+dtrain  <- dataset[ foto_mes==202101 ]  #defino donde voy a entrenar
+
+dapply  <- dataset[ foto_mes==202103 ]  #defino donde voy a aplicar el modelo
+```
+
+
+```{r}
+
+  modelo  <- rpart("clase_ternaria ~ .", 
+                   data= dtrain,
+                   xval= 0 ,
+                   cp=-0.2, minsplit=3969, minbucket=176, maxdepth=20 )
+  prediccion  <- predict( modelo, dtrain, type = "prob")
+dt_pred<-data.table(prediccion)
+colnames(dt_pred)<- c('a','b','c')
+```
+
+
+```{r}
+dtrain[clase_ternaria=="BAJA+2"]
+base=data.table(tr=dtrain[,clase_ternaria],dt_pred)
+```
+
+```{r}
+library('dplyr')
+library('tidyr')
+
+base<-base %>% pivot_longer(-tr)
+base$name<-as.factor(base$name)
+base2<-base %>% filter(name!='c')
+base2 %>% ggplot(mapping=aes(x=name,y=value)) + geom_boxplot()
+
+base[,.(media_b=mean(b),min_b=min(b),maximo_b=max(b), media_a=mean(a),min_a=min(a),maximo_a=max(a)), by=tr]
+```
+

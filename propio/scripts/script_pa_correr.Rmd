@@ -1,0 +1,289 @@
+---
+title: "bo"
+output: html_document
+---
+
+
+```{r}
+#Optimizacion Bayesiana de hiperparametros de  rpart
+#funciona automaticamente con EXPERIMENTOS
+#va generando incrementalmente salidas para kaggle
+
+#limpio la memoria
+rm( list=ls() )  #remove all objects
+gc()             #garbage collection
+
+library("data.table")
+library("rlist")
+library("yaml")
+
+library("rpart")
+library("parallel")
+
+#paquetes necesarios para la Bayesian Optimization
+library("DiceKriging")
+library("mlrMBO")
+```
+```{r}
+#para poder usarlo en la PC y en la nube
+switch ( Sys.info()[['sysname']],
+         Windows = { directory.root   <-  "M:\\" },   #Microsoft Windows
+         Darwin  = { directory.root   <-  "~/dm/" },  #Apple MAC
+#         Linux   = { directory.root   <-  "~/buckets/b1/" }  #Entorno Google Cloud
+         Linux   = { directory.root   <-  "~/" }  #Hay un problema en el almacenamiento en cloud del BO por el momento se graba en el usuario
+       )
+#defino la carpeta donde trabajo
+
+#Hay un error en el almacenamiento 
+
+setwd( directory.root )
+
+```
+ 
+```{r}
+setwd("/Users/achain/Documents/github/labo/propio")
+```
+```{r}
+data2[,.(foto_mes,numero_de_cliente)]
+dd<-c()
+ordenado<-data2[order(numero_de_cliente),numero_de_cliente]
+seq(1:(length(ordenado)-1))
+for (i in seq(1:(length(ordenado)-1))) {
+  if (ordenado[i]<ordenado[i+1]) {
+    dd[i]<-TRUE
+  } else {dd[i]<-FALSE}
+}
+data2[order(numero_de_cliente)]
+mean(dd)
+ordenado[1]
+```
+
+ 
+```{r}
+data2<-fread(input = './datasets/competencia1_2022.csv')
+
+colnames(data2)
+varse<-c("foto_mes","active_quarter","cliente_vip","internet","cliente_edad","cliente_antiguedad","mrentabilidad","mrentabilidad_annual","mcomisiones","mactivos_margen","mpasivos_margen","cproductos","tcuentas","ccuenta_corriente","mcuenta_corriente_adicional","mcuenta_corriente","ccaja_ahorro","mcaja_ahorro","mcaja_ahorro_adicional","mcaja_ahorro_dolares","cdescubierto_preacordado","mcuentas_saldo","ctarjeta_debito","ctarjeta_debito_transacciones","mautoservicio","ctarjeta_visa","ctarjeta_visa_transacciones","mtarjeta_visa_consumo","ctarjeta_master","ctarjeta_master_transacciones","mtarjeta_master_consumo","cprestamos_personales","mprestamos_personales","cprestamos_prendarios","mprestamos_prendarios","cprestamos_hipotecarios","mprestamos_hipotecarios","cplazo_fijo","mplazo_fijo_dolares","mplazo_fijo_pesos","cinversion1","minversion1_pesos","minversion1_dolares","cinversion2","minversion2","cseguro_vida","cseguro_auto","cseguro_vivienda","cseguro_accidentes_personales","ccaja_seguridad","cpayroll_trx","mpayroll","mpayroll2","cpayroll2_trx","ccuenta_debitos_automaticos","mcuenta_debitos_automaticos","ctarjeta_visa_debitos_automaticos","mtarjeta_visa_debitos_automaticos","ctarjeta_master_debitos_automaticos","mttarjeta_master_debitos_automaticos","cpagodeservicios","mpagodeservicios","cpagomiscuentas","mpagomiscuentas","ccajeros_propios_descuentos","mcajeros_propios_descuentos","ctarjeta_visa_descuentos","mtarjeta_visa_descuentos","ctarjeta_master_descuentos","mtarjeta_master_descuentos","ccomisiones_mantenimiento","mcomisiones_mantenimiento","ccomisiones_otras","mcomisiones_otras","cforex","cforex_buy","mforex_buy","cforex_sell","mforex_sell","ctransferencias_recibidas","mtransferencias_recibidas","ctransferencias_emitidas","mtransferencias_emitidas","cextraccion_autoservicio","mextraccion_autoservicio","ccheques_depositados","mcheques_depositados","ccheques_emitidos","mcheques_emitidos","ccheques_depositados_rechazados","mcheques_depositados_rechazados","ccheques_emitidos_rechazados","mcheques_emitidos_rechazados","tcallcenter","ccallcenter_transacciones","thomebanking","chomebanking_transacciones","ccajas_transacciones","ccajas_consultas","ccajas_depositos","ccajas_extracciones","ccajas_otras","catm_trx","matm","catm_trx_other","matm_other","ctrx_quarter","tmobile_app","cmobile_app_trx","Master_delinquency","Master_status","Master_mfinanciacion_limite","Master_Fvencimiento","Master_Finiciomora","Master_msaldototal","Master_msaldopesos","Master_msaldodolares","Master_mconsumospesos","Master_mconsumosdolares","Master_mlimitecompra","Master_madelantopesos","Master_madelantodolares","Master_fultimo_cierre","Master_mpagado","Master_mpagospesos","Master_mpagosdolares","Master_fechaalta","Master_mconsumototal","Master_cconsumos","Master_cadelantosefectivo","Master_mpagominimo","Visa_delinquency","Visa_status","Visa_mfinanciacion_limite","Visa_Fvencimiento","Visa_Finiciomora","Visa_msaldototal","Visa_msaldopesos","Visa_msaldodolares","Visa_mconsumospesos","Visa_mconsumosdolares","Visa_mlimitecompra","Visa_madelantopesos","Visa_madelantodolares","Visa_fultimo_cierre","Visa_mpagado","Visa_mpagospesos","Visa_mpagosdolares","Visa_fechaalta","Visa_mconsumototal","Visa_cconsumos","Visa_cadelantosefectivo","Visa_mpagominimo","clase_ternaria")
+```
+ 
+```{r}
+length(varse)
+colnames(data2) %in%varse
+
+```
+ 
+```{r}
+kexperimento  <- NA   #NA si se corre la primera vez, un valor concreto si es para continuar procesando
+
+kscript           <- "04.02 - BO Rpart FE"
+kBO_iter    <-  200   #cantidad de iteraciones de la Optimizacion Bayesiana
+
+kcarpeta_datasets    <- "./datasets/"                          #VM o Ubuntu
+
+#kcarpeta_datasets    <- "./buckets/b1/datasets/"                          #VM o Ubuntu
+
+#Archivo con datos etiquetados para entrenamiento
+karchivo_entrada      <-  paste0(kcarpeta_datasets, "competencia1_2022_FE.csv")
+
+
+#Ganancia por TP
+kTPGain               <-  78000
+
+#Pérdida por FP
+kFPGain               <-  -2000
+
+
+hs  <- makeParamSet(
+          makeNumericParam("cp"       , lower= -1   , upper=    0.1),
+          makeIntegerParam("minsplit" , lower=  1L  , upper= 8000L),  #la letra L al final significa ENTERO
+          makeIntegerParam("minbucket", lower=  1L  , upper= 2000L),
+          makeIntegerParam("maxdepth" , lower=  3L  , upper=   20L),
+          forbidden = quote( minbucket > 0.5*minsplit ) )
+
+
+ksemilla_azar  <- 500113
+
+```
+ 
+ 
+```{r}
+#------------------------------------------------------------------------------
+#Funcion que lleva el registro de los experimentos
+
+get_experimento  <- function()
+{
+  if( !file.exists( "./maestro.yaml" ) )  cat( file="./maestro.yaml", "experimento: 1000" )
+
+  exp  <- read_yaml( "./maestro.yaml" )
+  experimento_actual  <- exp$experimento
+
+  exp$experimento  <- as.integer(exp$experimento + 1)
+  Sys.chmod( "./maestro.yaml", mode = "0644", use_umask = TRUE)
+  write_yaml( exp, "./maestro.yaml" )
+  Sys.chmod( "./maestro.yaml", mode = "0444", use_umask = TRUE) #dejo el archivo readonly
+
+  return( experimento_actual )
+}
+```
+ 
+```{r}
+#------------------------------------------------------------------------------
+#funcion para particionar, es la que Andres reemplaza con caret
+
+particionar  <- function( data, division, agrupa="", campo="fold", start=1, seed=NA )
+{
+  if( !is.na( seed)  )   set.seed( seed )
+
+  bloque  <- unlist( mapply(  function(x,y) { rep( y, x ) }, division, seq( from=start, length.out=length(division) )  ) )
+
+  data[ , (campo) :=  sample( rep( bloque, ceiling(.N/length(bloque))) )[1:.N],
+           by= agrupa ]
+}
+```
+ 
+```{r}
+ArbolSimple  <- function( fold_test, data, param )
+{
+  #genero el modelo
+  modelo  <- rpart("clase_ternaria ~ .", 
+                   data= data[ fold != fold_test, ],
+                   xval= 0,
+                   control= param )
+
+  #aplico el modelo a los datos de testing, fold==2
+  prediccion  <- predict( modelo, data[ fold==fold_test, ], type = "prob")
+
+  prob_baja2  <- prediccion[, "BAJA+2"]
+
+  ganancia_testing  <- sum(  data[ fold==fold_test ][ prob_baja2 >0.03,  ifelse( clase_ternaria=="BAJA+2", kTPGain, kFPGain ) ] )
+
+  return( ganancia_testing )
+}
+```
+ 
+
+```{r}
+#------------------------------------------------------------------------------
+
+ArbolesCrossValidation  <- function( data, param, qfolds, pagrupa, semilla )
+{
+  divi  <- rep( 1, qfolds )
+  particionar( data, divi, seed=semilla, agrupa=pagrupa )
+
+  ganancias  <- mcmapply( ArbolSimple, 
+                          seq(qfolds), # 1 2 3 4 5  
+                          MoreArgs= list( data, param), 
+                          SIMPLIFY= FALSE,
+                          mc.cores= 5 )   #se puede subir a 5 si posee Linux o Mac OS
+
+  data[ , fold := NULL ]
+  #devuelvo la primer ganancia y el promedio
+  return( mean( unlist( ganancias )) *  qfolds )   #aqui normalizo la ganancia
+}
+```
+
+
+```{r}
+#------------------------------------------------------------------------------
+#esta funcion solo puede recibir los parametros que se estan optimizando
+#el resto de los parametros se pasan como variables globales
+
+EstimarGanancia  <- function( x )
+{
+   GLOBAL_iteracion  <<-  GLOBAL_iteracion + 1
+
+   xval_folds  <- 5
+   ganancia  <-  ArbolesCrossValidation( dtrain, param=x, qfolds= xval_folds, pagrupa="clase_ternaria", semilla=ksemilla_azar )
+
+   #si tengo una ganancia superadora, genero el archivo para Kaggle
+   if(  ganancia > GLOBAL_ganancia_max )
+   {
+     GLOBAL_ganancia_max <<-  ganancia  #asigno la nueva maxima ganancia
+    
+     modelo  <- rpart("clase_ternaria ~ .",
+                      data= dtrain,
+                      xval= 0,
+                      control= x )
+
+     #genero el vector con la prediccion, la probabilidad de ser positivo
+     prediccion  <- predict( modelo, dapply)
+
+     prob_baja2  <- prediccion[, "BAJA+2"]
+     Predicted   <- ifelse( prob_baja2 > 0.03, 1, 0 )
+
+     entrega  <-  as.data.table( list( "numero_de_cliente"=dapply$numero_de_cliente, "Predicted"=Predicted)  )
+
+     #genero el archivo para Kaggle
+     fwrite( entrega, 
+             file= paste0(kkaggle, GLOBAL_iteracion, ".csv" ),
+             sep=  "," )
+   }
+
+   return( ganancia )
+}
+```
+
+
+```{r}
+#Aqui empieza el programa
+
+if( is.na(kexperimento ) )   kexperimento <- get_experimento()  #creo el experimento
+```
+
+
+```{r}
+#en estos archivos quedan los resultados
+kbayesiana  <- paste0("./E",  kexperimento, "_rpart.RDATA" )
+kkaggle     <- paste0("./E",kexperimento, "_rpart_kaggle_" )
+```
+ 
+```{r}
+GLOBAL_ganancia_max  <-  -Inf
+GLOBAL_iteracion  <- 0
+```
+ 
+ 
+```{r}
+#cargo los datos
+dataset <- fread(karchivo_entrada)
+
+#Para hacer pruebas rapidas puedo reducir el dataset a una fraccion
+#subsample <- sample(1:nrow(dataset), .1 * nrow(dataset))
+#dataset <- dataset[subsample,]
+
+dtrain  <- dataset[ foto_mes==202101 ]  #defino donde voy a entrenar
+
+dapply  <- dataset[ foto_mes==202103 ]  #defino donde voy a aplicar el modelo
+```
+```{r}
+#Aqui comienza la configuracion de la Bayesian Optimization
+
+configureMlr( show.learner.output = FALSE)
+
+funcion_optimizar  <- EstimarGanancia
+
+#configuro la busqueda bayesiana,  los hiperparametros que se van a optimizar
+#por favor, no desesperarse por lo complejo
+obj.fun  <- makeSingleObjectiveFunction(
+              fn=       funcion_optimizar,
+              minimize= FALSE,   #estoy Maximizando la ganancia
+              noisy=    TRUE,
+              par.set=  hs,
+              has.simple.signature = FALSE
+             )
+
+ctrl  <- makeMBOControl( save.on.disk.at.time= 60,  save.file.path= kbayesiana)
+ctrl  <- setMBOControlTermination(ctrl, iters= kBO_iter )
+ctrl  <- setMBOControlInfill(ctrl, crit= makeMBOInfillCritEI())
+
+surr.km  <-  makeLearner("regr.km", predict.type= "se", covtype= "matern3_2", control= list(trace= TRUE))
+```
+ 
+```{r}
+#inicio la optimizacion bayesiana
+if(!file.exists(kbayesiana)) {
+  run  <- mbo(obj.fun, learner = surr.km, control = ctrl)
+} else  run  <- mboContinue( kbayesiana )   #retomo en caso que ya exista
+```
+ 
+ 

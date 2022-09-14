@@ -41,7 +41,7 @@ setwd( directory.root )
 ```
  
 ```{r}
-setwd("/Users/achain/Documents/github/labo/propio")
+#setwd("/Users/achain/Documents/github/labo/propio")
 ```
 ```{r}
 data2[,.(foto_mes,numero_de_cliente)]
@@ -60,7 +60,7 @@ ordenado[1]
 
  
 ```{r}
-data2<-fread(input = './datasets/competencia1_2022.csv')
+#data2<-fread(input = './datasets/competencia1_2022.csv')
 
 colnames(data2)
 varse<-c("foto_mes","active_quarter","cliente_vip","internet","cliente_edad","cliente_antiguedad","mrentabilidad","mrentabilidad_annual","mcomisiones","mactivos_margen","mpasivos_margen","cproductos","tcuentas","ccuenta_corriente","mcuenta_corriente_adicional","mcuenta_corriente","ccaja_ahorro","mcaja_ahorro","mcaja_ahorro_adicional","mcaja_ahorro_dolares","cdescubierto_preacordado","mcuentas_saldo","ctarjeta_debito","ctarjeta_debito_transacciones","mautoservicio","ctarjeta_visa","ctarjeta_visa_transacciones","mtarjeta_visa_consumo","ctarjeta_master","ctarjeta_master_transacciones","mtarjeta_master_consumo","cprestamos_personales","mprestamos_personales","cprestamos_prendarios","mprestamos_prendarios","cprestamos_hipotecarios","mprestamos_hipotecarios","cplazo_fijo","mplazo_fijo_dolares","mplazo_fijo_pesos","cinversion1","minversion1_pesos","minversion1_dolares","cinversion2","minversion2","cseguro_vida","cseguro_auto","cseguro_vivienda","cseguro_accidentes_personales","ccaja_seguridad","cpayroll_trx","mpayroll","mpayroll2","cpayroll2_trx","ccuenta_debitos_automaticos","mcuenta_debitos_automaticos","ctarjeta_visa_debitos_automaticos","mtarjeta_visa_debitos_automaticos","ctarjeta_master_debitos_automaticos","mttarjeta_master_debitos_automaticos","cpagodeservicios","mpagodeservicios","cpagomiscuentas","mpagomiscuentas","ccajeros_propios_descuentos","mcajeros_propios_descuentos","ctarjeta_visa_descuentos","mtarjeta_visa_descuentos","ctarjeta_master_descuentos","mtarjeta_master_descuentos","ccomisiones_mantenimiento","mcomisiones_mantenimiento","ccomisiones_otras","mcomisiones_otras","cforex","cforex_buy","mforex_buy","cforex_sell","mforex_sell","ctransferencias_recibidas","mtransferencias_recibidas","ctransferencias_emitidas","mtransferencias_emitidas","cextraccion_autoservicio","mextraccion_autoservicio","ccheques_depositados","mcheques_depositados","ccheques_emitidos","mcheques_emitidos","ccheques_depositados_rechazados","mcheques_depositados_rechazados","ccheques_emitidos_rechazados","mcheques_emitidos_rechazados","tcallcenter","ccallcenter_transacciones","thomebanking","chomebanking_transacciones","ccajas_transacciones","ccajas_consultas","ccajas_depositos","ccajas_extracciones","ccajas_otras","catm_trx","matm","catm_trx_other","matm_other","ctrx_quarter","tmobile_app","cmobile_app_trx","Master_delinquency","Master_status","Master_mfinanciacion_limite","Master_Fvencimiento","Master_Finiciomora","Master_msaldototal","Master_msaldopesos","Master_msaldodolares","Master_mconsumospesos","Master_mconsumosdolares","Master_mlimitecompra","Master_madelantopesos","Master_madelantodolares","Master_fultimo_cierre","Master_mpagado","Master_mpagospesos","Master_mpagosdolares","Master_fechaalta","Master_mconsumototal","Master_cconsumos","Master_cadelantosefectivo","Master_mpagominimo","Visa_delinquency","Visa_status","Visa_mfinanciacion_limite","Visa_Fvencimiento","Visa_Finiciomora","Visa_msaldototal","Visa_msaldopesos","Visa_msaldodolares","Visa_mconsumospesos","Visa_mconsumosdolares","Visa_mlimitecompra","Visa_madelantopesos","Visa_madelantodolares","Visa_fultimo_cierre","Visa_mpagado","Visa_mpagospesos","Visa_mpagosdolares","Visa_fechaalta","Visa_mconsumototal","Visa_cconsumos","Visa_cadelantosefectivo","Visa_mpagominimo","clase_ternaria")
@@ -78,9 +78,9 @@ kexperimento  <- NA   #NA si se corre la primera vez, un valor concreto si es pa
 kscript           <- "04.02 - BO Rpart FE"
 kBO_iter    <-  200   #cantidad de iteraciones de la Optimizacion Bayesiana
 
-kcarpeta_datasets    <- "./datasets/"                          #VM o Ubuntu
+#kcarpeta_datasets    <- "./datasets/"                          #VM o Ubuntu
 
-#kcarpeta_datasets    <- "./buckets/b1/datasets/"                          #VM o Ubuntu
+kcarpeta_datasets    <- "./buckets/b1/datasets/"                          #VM o Ubuntu
 
 #Archivo con datos etiquetados para entrenamiento
 karchivo_entrada      <-  paste0(kcarpeta_datasets, "competencia1_2022_FE.csv")
@@ -155,7 +155,7 @@ ArbolSimple  <- function( fold_test, data, param )
 
   prob_baja2  <- prediccion[, "BAJA+2"]
 
-  ganancia_testing  <- sum(  data[ fold==fold_test ][ prob_baja2 >0.03,  ifelse( clase_ternaria=="BAJA+2", kTPGain, kFPGain ) ] )
+  ganancia_testing  <- sum(  data[ fold==fold_test ][ prob_baja2 >0.025,  ifelse( clase_ternaria=="BAJA+2", kTPGain, kFPGain ) ] )
 
   return( ganancia_testing )
 }
@@ -209,7 +209,7 @@ EstimarGanancia  <- function( x )
      prediccion  <- predict( modelo, dapply)
 
      prob_baja2  <- prediccion[, "BAJA+2"]
-     Predicted   <- ifelse( prob_baja2 > 0.03, 1, 0 )
+     Predicted   <- ifelse( prob_baja2 > 0.025, 1, 0 )
 
      entrega  <-  as.data.table( list( "numero_de_cliente"=dapply$numero_de_cliente, "Predicted"=Predicted)  )
 

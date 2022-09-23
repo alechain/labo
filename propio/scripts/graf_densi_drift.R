@@ -6,19 +6,20 @@ require("data.table")
 require("rpart")
 
 
+
 #------------------------------------------------------------------------------
 
 graficar_campo  <- function( campo, campo_clase, valores_clase )
 {
   
   #quito de grafico las colas del 5% de las densidades
-  qA  <- quantile(  dataset[ foto_mes==202101 , get(campo) ] , prob= c(0.05, 0.95), na.rm=TRUE )
+  qA  <- quantile(  dataset[ !(foto_mes  %in% (202103)) , get(campo) ] , prob= c(0.05, 0.95), na.rm=TRUE )
   qB  <- quantile(  dataset[ foto_mes==202103 , get(campo) ] , prob= c(0.05, 0.95), na.rm=TRUE )
   
   xxmin  <- pmin( qA[[1]], qB[[1]] )
   xxmax  <- pmax( qA[[2]], qB[[2]] )
   
-  densidad_A  <- density( dataset[ foto_mes==202101 & get(campo_clase) %in% valores_clase, get(campo) ],
+  densidad_A  <- density( dataset[ !(foto_mes  %in% (202103)) & get(campo_clase) %in% valores_clase, get(campo) ],
                           kernel="gaussian", na.rm=TRUE )
   
   densidad_B  <- density( dataset[ foto_mes==202103 & get(campo_clase) %in% valores_clase, get(campo) ],
@@ -34,27 +35,29 @@ graficar_campo  <- function( campo, campo_clase, valores_clase )
   lines(densidad_B, col="red", lty=2)
   
   legend(  "topright",  
-           legend=c("202001", "202003"),
+           legend=c("not 202003", "202003"),
            col=c("blue", "red"), lty=c(1,2))
   
 }
+
+
 #------------------------------------------------------------------------------
 #Aqui comienza el programa
-setwd("~/buckets/b1")
+setwd("/home/alechain97/buckets/b1")
+#setwd("/Users/achain/Documents/github/labo/propio")  #Establezco el Working Directory
 
 #cargo el dataset donde voy a entrenar
-dataset  <- fread("./datasets/competencia2_2022.csv.gz")
-
-dataset  <- dataset[  foto_mes %in% c( 202101, 202103 ) ]
+#dataset  <- fread("/Users/achain/Downloads/competencia2_2022.csv.gz")  #donde entreno
+dataset  <- fread("/home/alechain97/buckets/b1/datasets/competencia2_2022.csv.gz")  #donde entreno
 
 #creo la clase_binaria SI={ BAJA+1, BAJA+2 }    NO={ CONTINUA }
-dataset[ foto_mes==202101, 
+dataset[ !(foto_mes  %in% (202103)) , 
          clase_binaria :=  ifelse( clase_ternaria=="CONTINUA", "NO", "SI" ) ]
 
 # Entreno el modelo
 # utilizo los mejores hiperparametros encontrados en una Bayesian Optimizationcon 5-fold Cross Validation
 modelo  <- rpart(formula=   "clase_binaria ~ . -clase_ternaria",
-                 data=      dataset[ foto_mes==202101 ],  #los datos donde voy a entrenar
+                 data=      dataset[ !(foto_mes  %in% (202103)) ],  #los datos donde voy a entrenar
                  xval=         0,
                  cp=           -0.69,
                  minsplit=    870,
@@ -67,9 +70,14 @@ campos_buenos  <- c( campos_modelo,  setdiff( colnames(dataset), campos_modelo )
 campos_buenos  <-  setdiff(  campos_buenos,  c( "foto_mes","clase_ternaria","clase_binaria" ) )
 
 
-dir.create( "./exp/",  showWarnings = FALSE ) 
-dir.create( "./exp/DR5130/", showWarnings = FALSE )
-setwd("./exp/DR5130/")
+#dir.create( "./exp/",  showWarnings = FALSE ) 
+#dir.create( "./exp/DR5130/", showWarnings = FALSE )
+#setwd("./exp/DR5130/")
+#setwd("/Users/achain/Documents/github/labo/propio/exp")
+#dir.create( "./DR5130", showWarnings = FALSE )
+#setwd("/Users/achain/Documents/github/labo/propio/exp/DR5130")
+
+setwd("/home/alechain97/buckets/b1/exp/drift_tot")
 
 
 
@@ -87,10 +95,3 @@ for( campo in  campos_buenos )
 }
 
 dev.off()
-
-
-
-
-
-
-

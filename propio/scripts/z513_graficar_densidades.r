@@ -10,33 +10,33 @@ require("rpart")
 
 graficar_campo  <- function( campo, campo_clase, valores_clase )
 {
-  
+
   #quito de grafico las colas del 5% de las densidades
   qA  <- quantile(  dataset[ foto_mes==202101 , get(campo) ] , prob= c(0.05, 0.95), na.rm=TRUE )
   qB  <- quantile(  dataset[ foto_mes==202103 , get(campo) ] , prob= c(0.05, 0.95), na.rm=TRUE )
-  
+
   xxmin  <- pmin( qA[[1]], qB[[1]] )
   xxmax  <- pmax( qA[[2]], qB[[2]] )
-  
+
   densidad_A  <- density( dataset[ foto_mes==202101 & get(campo_clase) %in% valores_clase, get(campo) ],
                           kernel="gaussian", na.rm=TRUE )
-  
+
   densidad_B  <- density( dataset[ foto_mes==202103 & get(campo_clase) %in% valores_clase, get(campo) ],
                           kernel="gaussian", na.rm=TRUE )
-  
+
   plot( densidad_A,
         col="blue",
         xlim= c( xxmin, xxmax ),
         ylim= c( 0, pmax( max(densidad_A$y), max(densidad_B$y) ) ),
         main= paste0( campo, ",   ", campo_clase, " in ",  paste( valores_clase,collapse=",")) 
-  )
-  
+      )
+
   lines(densidad_B, col="red", lty=2)
   
   legend(  "topright",  
            legend=c("202001", "202003"),
            col=c("blue", "red"), lty=c(1,2))
-  
+
 }
 #------------------------------------------------------------------------------
 #Aqui comienza el programa
@@ -87,10 +87,4 @@ for( campo in  campos_buenos )
 }
 
 dev.off()
-
-
-
-
-
-
 

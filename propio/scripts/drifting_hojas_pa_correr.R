@@ -1,5 +1,5 @@
 #Analisis de  Concept Drifting y Data Drifting
-
+rm(list=ls())
 #cargo las librerias que necesito
 require("data.table")
 require("rpart")
@@ -30,7 +30,7 @@ cantidad_hojas  <- sum( modelo$frame$var == "<leaf>" )
 
 #aplico el modelo a TODOS los datos, incluso donde entreno
 prediccion  <- predict( object=  modelo,
-                        newdata= dataset[-c("clase_ternaria","foto_mes")],
+                        newdata= dataset[,-c("clase_ternaria","foto_mes")],
                         type = "prob")
 
 #le pego la prediccion al dataset
@@ -57,13 +57,13 @@ tb_hojas[  gan_rest>0,
 setwd("/home/alechain97/buckets/b1/exp/tx_hojas")
 setorder( tb_hojas,  -prob_SI )
 
-tb_hojas[  , regacum_202101 := cumsum( reg_202101 ) ]
+tb_hojas[  , regacum_rest := cumsum( reg_rest ) ]
 tb_hojas[  , regacum_202103 := cumsum( reg_202103 ) ]
-tb_hojas[  , ganacum_202101 := cumsum( gan_202101 ) ]
+tb_hojas[  , ganacum_rest := cumsum( gan_rest ) ]
 tb_hojas[  , ganacum_202103 := cumsum( gan_202103 ) ]
 
 
 fwrite( tb_hojas,
-        file= "tb_hojas.txt",
+        file= "tb_hojas_sin_fotomes.txt",
         sep= "\t" )
 

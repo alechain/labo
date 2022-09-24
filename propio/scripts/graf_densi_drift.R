@@ -56,8 +56,8 @@ dataset[ !(foto_mes  %in% (202103)) ,
 
 # Entreno el modelo
 # utilizo los mejores hiperparametros encontrados en una Bayesian Optimizationcon 5-fold Cross Validation
-modelo  <- rpart(formula=   "clase_binaria ~ . -clase_ternaria",
-                 data=      dataset[ !(foto_mes  %in% (202103)) ],  #los datos donde voy a entrenar
+modelo  <- rpart(formula=   "clase_binaria ~ . ",
+                 data=      dataset[ !(foto_mes  %in% (202103)),-c("clase_ternaria","foto_mes") ],  #los datos donde voy a entrenar
                  xval=         0,
                  cp=           -0.69,
                  minsplit=    870,

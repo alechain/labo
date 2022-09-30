@@ -44,7 +44,7 @@ kBO_iter    <-  2000   #cantidad de iteraciones de la Optimizacion Bayesiana
 kcarpeta_datasets    <- "./datasets/"                          #VM o Ubuntu
 
 #Archivo con datos etiquetados para entrenamiento
-karchivo_entrada      <-  paste0(kcarpeta_datasets, "competencia1_2022_FE.csv")
+karchivo_entrada      <-  paste0(kcarpeta_datasets, "competencia1_2022.csv")
 
 
 #Ganancia por TP
@@ -232,12 +232,24 @@ if(!file.exists(kbayesiana)) {
 
 
 
+library(rSAFE)
+
+
+library(randomForest)
+set.seed(ksemilla_azar)
+model_rf1 <- randomForest(as.factor(clase_binaria) ~ . , data = dtrain[,-c("clase_ternaria","foto_mes")],na.action=na.omit)
+
+t(t(sapply(dataset, class)))
+data[is.na(dataset$ColWtCL_6),]
+dataset[is.na(dataset[,-c("clase_ternaria","foto_mes","clase_binaria")]),]
+setnafill(dataset, fill = 0)
+which(is.na(dataset))
 modelo  <- rpart("clase_binaria ~ .",
                  data= dtrain[,-c("clase_ternaria","foto_mes")],
                  xval= 0,
-                 cp=           -1,
-                 minsplit=    200,
-                 minbucket=   317,
+                 cp=           -0.3616617,
+                 minsplit=    1056,
+                 minbucket=   119,
                  maxdepth=      7 )
 
 #genero el vector con la prediccion, la probabilidad de ser positivo
@@ -255,5 +267,5 @@ ganancia_testing  <- sum(  dtrain[ prob_baja2 >0.05,  ifelse( clase_ternaria=="B
 
 base[tr=='BAJA+2']
 base2<-base %>% pivot_longer(-tr)
-base2 %>% filter(name=='SI') %>% ggplot(mapping = aes(x=value,col=tr)) + geom_density() + xlim(c(0,0.5))
+base2 %>% filter(name=='SI') %>% ggplot(mapping = aes(x=value,col=tr)) + geom_density() + xlim(c(0,0.4))
                         

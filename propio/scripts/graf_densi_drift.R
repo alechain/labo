@@ -35,7 +35,7 @@ graficar_campo  <- function( campo, campo_clase, valores_clase )
   lines(densidad_B, col="red", lty=2)
   
   legend(  "topright",  
-           legend=c("not 202003", "202003"),
+           legend=c("not 202103", "202103"),
            col=c("blue", "red"), lty=c(1,2))
   
 }
@@ -47,9 +47,9 @@ setwd("/home/alechain97/buckets/b1")
 #setwd("/Users/achain/Documents/github/labo/propio")  #Establezco el Working Directory
 
 #cargo el dataset donde voy a entrenar
-#dataset  <- fread("/Users/achain/Downloads/competencia2_2022.csv.gz")  #donde entreno
-dataset  <- fread("/home/alechain97/buckets/b1/datasets/competencia2_2022.csv.gz")  #donde entreno
-
+#dataset  <- fread("/Users/achain/Downloads/competencia2_2022_FE.csv.gz")  #donde entreno
+dataset  <- fread("/home/alechain97/buckets/b1/datasets/competencia2_2022_FE.csv.gz")  #donde entreno
+dataset<-dataset[foto_mes>=201901 & foto_mes<=202103 ,]
 #creo la clase_binaria SI={ BAJA+1, BAJA+2 }    NO={ CONTINUA }
 dataset[ !(foto_mes  %in% (202103)) , 
          clase_binaria :=  ifelse( clase_ternaria=="CONTINUA", "NO", "SI" ) ]
@@ -77,11 +77,11 @@ campos_buenos  <-  setdiff(  campos_buenos,  c( "foto_mes","clase_ternaria","cla
 #dir.create( "./DR5130", showWarnings = FALSE )
 #setwd("/Users/achain/Documents/github/labo/propio/exp/DR5130")
 
-setwd("/home/alechain97/buckets/b1/exp/drift_tot")
+setwd("/home/alechain97/buckets/b1/exp/drift_tot_2")
 
 
 
-pdf("densidades_01_03.pdf")
+pdf("densidades_FE.pdf")
 
 for( campo in  campos_buenos )
 {
